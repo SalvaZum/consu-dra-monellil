@@ -183,12 +183,12 @@ body {
     margin-right: auto;
     color: var(--primary);
     font-weight: bold;
-    line-height: 1.3;
+    line-height: 30px;
 }
 
 
 .btn-hero {
-    background-color: var(--secondary);
+    background-color: var(--primary);
     color: var(--white);
     border: none;
     border-radius: 5px;
@@ -203,7 +203,7 @@ body {
 }
 
 .btn-hero:hover {
-    background-color: #2e7d32;
+    background-color: var(--primary-dark);
 }
 
 .btn-outline-hero {
