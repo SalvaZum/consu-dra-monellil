@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro Médico Dra. Monelli - Administración</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Google API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --danger: #ea4335;
+            --warning: #f9ab00;
+            --light: #f8f9fa;
+            --dark: #202124;
+            --gray: #5f6368;
+            --light-gray: #dadce0;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+
+        /* Login Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        }
+
+        .login-form {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+        }
+
+        .btn-danger:hover {
+            background-color: #c5221f;
+        }
+
+        .btn-warning {
+            background-color: var(--warning);
+            color: var(--dark);
+        }
+
+        .btn-warning:hover {
+            background-color: #e09a00;
+        }
+
+        .btn-success {
+            background-color: var(--secondary);
+        }
+
+        .btn-success:hover {
+            background-color: #2e7d32;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--light-gray);
+            color: var(--dark);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--light-gray);
+        }
+
+        /* Admin Dashboard */
+        .admin-header {
+            background-color: var(--white);
+            box-shadow: var(--shadow);
+            padding: 15px 0;
+        }
+
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .admin-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .logout-btn {
+            background-color: var(--danger);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .sync-btn {
+            background-color: var(--warning);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .google-btn {
+            background-color: var(--secondary);
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .admin-dashboard {
+            padding: 30px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: var(--white);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--light-gray);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .table-container {
+            background-color: var(--white);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--dark);
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-confirmado {
+            background-color: #e6f4ea;
+            color: var(--secondary);
+        }
+
+        .status-cancelado {
+            background-color: #fce8e6;
+            color: var(--danger);
+        }
+
+        .status-completado {
+            background-color: #e8f0fe;
+            color: var(--primary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .alert-success {
+            background-color: #e6f4ea;
+            color: var(--secondary);
+            border: 1px solid #34a853;
+        }
+
+        .alert-error {
+            background-color: #fce8e6;
+            color: var(--danger);
+            border: 1px solid #ea4335;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .filter-group select, .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .patient-info {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        /* Modal de confirmación para eliminar */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .confirm-modal-content {
+            background-color: var(--white);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .confirm-modal h3 {
+            color: var(--danger);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .confirm-modal p {
+            color: var(--gray);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .confirm-modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        /* Estilos para Google Calendar */
+        .google-calendar-section .stat-card {
+            position: relative;
+        }
+
+        .events-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .calendar-event {
+            transition: transform 0.2s ease;
+        }
+
+        .calendar-event:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                padding: 8px 15px;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .admin-nav {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .logout-btn, .sync-btn, .google-btn {
+                width: 100%;
+            }
+
+            .confirm-modal-buttons {
+                flex-direction: column;
+            }
+        }
+        /* Estilos para el botón de usuario conectado */
+.user-connected-btn {
+    background: white !important;
+    border: 1px solid #dee2e6 !important;
+    color: #495057 !important;
+    transition: all 0.3s ease;
+}
+
+.user-connected-btn:hover {
+    background: #f8f9fa !important;
+    border-color: #adb5bd !important;
+    transform: translateY(-1px);
+}
+
+.avatar-img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.3s ease;
+}
+
+.user-connected-btn:hover .avatar-img {
+    border-color: var(--primary);
+}
+
+.user-info {
+    text-align: left;
+    line-height: 1.2;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+.user-email {
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+    </style>
+</head>
+<body>
+    <!-- Modal de confirmación para eliminar -->
+    <div id="confirm-modal" class="confirm-modal">
+        <div class="confirm-modal-content">
+            <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Eliminación</h3>
+            <p id="confirm-message">¿Estás seguro de que deseas eliminar este turno? Esta acción no se puede deshacer.</p>
+            <div class="confirm-modal-buttons">
+                <button id="confirm-delete-btn" class="btn btn-danger">Sí, Eliminar</button>
+                <button id="cancel-delete-btn" class="btn btn-outline">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Section (se muestra inicialmente) -->
+    <div id="login-section" class="login-container">
+        <div class="login-form">
+            <h2><i class="fas fa-lock"></i> Acceso Administración</h2>
+           
+            <div id="login-alert" class="alert" style="display: none;"></div>
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" placeholder="Ingresa tu usuario">
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" placeholder="Ingresa tu contraseña">
+            </div>
+            
+            <button id="login-btn" class="btn">Iniciar Sesión</button>
+            <p><a href="index.html">Volver a la pagina</a></p>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (se muestra después del login) -->
+    <div id="admin-section" style="display: none;">
+        <header class="admin-header">
+            <div class="container">
+                <nav class="admin-nav">
+                    <div class="admin-title">
+                        <i class="fas fa-user-md"></i> Panel de Administración - Dra. Monelli
+                    </div>
+                    <div class="nav-buttons">
+                        <!-- En admin.html o donde tengas el botón -->
+                        <button id="google-auth-btn" class="btn btn-success" style="min-width: 200px; height: auto; padding: 10px 15px;">
+                            <i class="fab fa-google"></i> Conectar Google Calendar
+                        </button>
+                        <div id="google-auth-status"></div>
+                        <button id="sync-turns-btn" class="btn sync-btn">
+                            <i class="fas fa-sync"></i> Sincronizar Turnos
+                        </button>
+                        <button id="logout-btn" class="btn logout-btn">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </header>
+
+        <section class="admin-dashboard">
+            <div class="container">
+                <div id="admin-alert" class="alert" style="display: none;"></div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-turns">0</div>
+                        <div class="stat-label">Total Turnos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="confirmed-turns">0</div>
+                        <div class="stat-label">Confirmados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="today-turns">0</div>
+                        <div class="stat-label">Hoy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="canceled-turns">0</div>
+                        <div class="stat-label">Cancelados</div>
+                    </div>
+                </div>
+
+                <!-- Sección de Google Calendar (Opcional - puedes mantenerla o eliminar) -->
+                <div class="google-calendar-section" style="margin-bottom: 30px; display: none;" id="google-calendar-section">
+                    <div class="stat-card">
+                        <h3 style="color: var(--primary); margin-bottom: 15px;">
+                            <i class="fab fa-google"></i> Google Calendar
+                        </h3>
+                        
+                        <div id="calendar-events-container" style="margin-top: 20px; min-height: 100px;">
+                            <div style="text-align: center; padding: 20px; color: var(--gray);">
+                                <i class="fas fa-calendar-plus"></i> Conecta Google Calendar para ver los eventos
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" data-tab="today">Turnos de Hoy</div>
+                    <div class="tab" data-tab="all">Todos los Turnos</div>
+                    <div class="tab" data-tab="upcoming">Próximos Turnos</div>
+                </div>
+
+                <div class="tab-content active" id="today-tab">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="today-search">Buscar paciente:</label>
+                            <input type="text" id="today-search" placeholder="Nombre o apellido...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="today-filter">Filtrar por servicio:</label>
+                            <select id="today-filter">
+                                <option value="all">Todos los servicios</option>
+                                <option value="Fichas Médicas">Fichas Médicas</option>
+                                <option value="Fichas Escolares (CUS)">Fichas Escolares (CUS)</option>
+                                <option value="Aptos Médicos">Aptos Médicos</option>
+                                <option value="Certificados Médicos">Certificados Médicos</option>
+                                <option value="Consultas Médicas y de Especialistas">Consultas Médicas</option>
+                                <option value="Electrocardiograma">Electrocardiograma</option>
+                                <option value="Toma de Tensión">Toma de Tensión</option>
+                                <option value="Colocación de Inyectables">Colocación de Inyectables</option>
+                                <option value="Colocación de Inyectables">Psiquiatra</option>
+                                <option value="Colocación de Inyectables">Homeopatía</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="today-table">
+                            <thead>
+                                <tr>
+                                    <th>Hora</th>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Servicio</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="today-tbody">
+                                <tr>
+                                    <td colspan="6" class="loading">Cargando turnos de hoy...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="all-tab">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="all-search">Buscar paciente:</label>
+                            <input type="text" id="all-search" placeholder="Nombre o apellido...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="date-filter">Filtrar por fecha:</label>
+                            <input type="date" id="date-filter">
+                        </div>
+                        <div class="filter-group">
+                            <label for="service-filter">Filtrar por servicio:</label>
+                            <select id="service-filter">
+                                <option value="all">Todos los servicios</option>
+                                <option value="Fichas Médicas">Fichas Médicas</option>
+                                <option value="Fichas Escolares (CUS)">Fichas Escolares (CUS)</option>
+                                <option value="Aptos Médicos">Aptos Médicos</option>
+                                <option value="Certificados Médicos">Certificados Médicos</option>
+                                <option value="Consultas Médicas y de Especialistas">Consultas Médicas</option>
+                                <option value="Electrocardiograma">Electrocardiograma</option>
+                                <option value="Toma de Tensión">Toma de Tensión</option>
+                                <option value="Colocación de Inyectables">Colocación de Inyectables</option>
+                                <option value="Colocación de Inyectables">Psiquiatra</option>
+                                <option value="Colocación de Inyectables">Homeopatía</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="status-filter">Filtrar por estado:</label>
+                            <select id="status-filter">
+                                <option value="all">Todos los estados</option>
+                                <option value="confirmado">Confirmado</option>
+                                <option value="completado">Completado</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="all-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Servicio</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-tbody">
+                                <tr>
+                                    <td colspan="7" class="loading">Cargando todos los turnos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="upcoming-tab">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="upcoming-search">Buscar paciente:</label>
+                            <input type="text" id="upcoming-search" placeholder="Nombre o apellido...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="upcoming-days">Próximos días:</label>
+                            <select id="upcoming-days">
+                                <option value="7">Próximos 7 días</option>
+                                <option value="14">Próximos 14 días</option>
+                                <option value="30">Próximos 30 días</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="upcoming-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Hora</th>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Servicio</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="upcoming-tbody">
+                                <tr>
+                                    <td colspan="7" class="loading">Cargando próximos turnos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Contenedor para mensajes de estado -->
+        <div id="statusMessages"></div>    
+    </div>
+
+    <script src="config.js"></script>
+    <script src="google-calendar.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
