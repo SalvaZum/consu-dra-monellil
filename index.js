@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
             field: "servicio",
             options: [
                 "Consulta General",
-                "Certificado Médico/Escolar",
+                "Certificado Escolar/Médico",
                 "Toma de Tensión/Glucemia",
                 "Electrocardiograma",
                 "Fichas Médicas",
